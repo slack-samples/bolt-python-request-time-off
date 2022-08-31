@@ -1,10 +1,6 @@
-import os
-
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 from app import app
-
-from app.listeners.functions import request_approval
 
 # Start Bolt app
 if __name__ == "__main__":
