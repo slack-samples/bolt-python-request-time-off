@@ -1,58 +1,141 @@
 {
   "_metadata": {
-      "major_version": 1,
-      "minor_version": 1
+    "major_version": 2,
+    "minor_version": 2
   },
   "display_information": {
-      "name": "Bolt Template App"
+    "name": "Bolt Py Request Time Off"
   },
   "features": {
-      "app_home": {
-          "home_tab_enabled": true,
-          "messages_tab_enabled": false,
-          "messages_tab_read_only_enabled": true
-      },
-      "bot_user": {
-          "display_name": "Bolt Template App",
-          "always_online": false
-      },
-      "shortcuts": [
-          {
-              "name": "Run sample shortcut",
-              "type": "global",
-              "callback_id": "sample_shortcut_id",
-              "description": "Runs a sample shortcut"
-          }
-      ],
-      "slash_commands": [
-          {
-              "command": "/sample-command",
-              "description": "Runs a sample command",
-              "should_escape": false
-          }
-      ]
+    "app_home": {
+      "home_tab_enabled": true,
+      "messages_tab_enabled": true,
+      "messages_tab_read_only_enabled": true
+    },
+    "bot_user": {
+      "display_name": "Bolt Py Request Time Off",
+      "always_online": false
+    }
   },
   "oauth_config": {
-      "scopes": {
-          "bot": [
-              "channels:history",
-              "chat:write",
-              "commands"
-          ]
-      }
+    "scopes": {
+      "bot": [
+        "channels:history",
+        "chat:write",
+        "commands",
+        "chat:write.public"
+      ]
+    }
   },
   "settings": {
-      "event_subscriptions": {
-          "bot_events": [
-              "app_home_opened",
-              "message.channels"
-          ]
+    "event_subscriptions": {
+      "bot_events": [
+        "message.channels"
+      ]
+    },
+    "interactivity": {
+      "is_enabled": true
+    },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": true,
+    "token_rotation_enabled": false
+  },
+  "functions": {
+    "review_approval": {
+      "title": "Approval Function",
+      "description": "Get approval for a request",
+      "input_parameters": {
+        "properties": {
+          "employee": {
+            "type": "slack#/types/user_id",
+            "description": "Requester"
+          },
+          "manager": {
+            "type": "slack#/types/user_id",
+            "description": "Manager"
+          },
+          "start_date": {
+            "type": "slack#/types/timestamp",
+            "description": "Start Date"
+          },
+          "end_date": {
+            "type": "slack#/types/timestamp",
+            "description": "End Date"
+          }
+        },
+        "required": [
+          "employee",
+          "manager",
+          "start_date",
+          "end_date"
+        ]
       },
-      "interactivity": {
-          "is_enabled": true
+      "output_parameters": {
+        "properties": {},
+        "required": []
+      }
+    }
+  },
+  "types": {},
+  "workflows": {
+    "time_off_request": {
+      "title": "Time Off Request Workflow",
+      "description": "",
+      "input_parameters": {
+        "properties": {
+          "interactivity": {
+            "type": "slack#/types/interactivity"
+          }
+        },
+        "required": []
       },
-      "org_deploy_enabled": false,
-      "socket_mode_enabled": true,
-      "token_rotation_enabled": false
-  }
+      "steps": [
+        {
+          "id": "0",
+          "function_id": "slack#/functions/open_form",
+          "inputs": {
+            "title": "Request Time Off",
+            "submit_label": "Request",
+            "description": "Please describe your request",
+            "interactivity": "{{inputs.interactivity}}",
+            "fields": {
+              "required": [
+                "manager",
+                "start_date",
+                "end_date"
+              ],
+              "elements": [
+                {
+                  "name": "manager",
+                  "title": "Manager",
+                  "type": "slack#/types/user_id"
+                },
+                {
+                  "name": "start_date",
+                  "title": "Start Date",
+                  "type": "slack#/types/timestamp"
+                },
+                {
+                  "name": "end_date",
+                  "title": "End Date",
+                  "type": "slack#/types/timestamp"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "1",
+          "function_id": "#/functions/review_approval",
+          "inputs": {
+            "employee": "{{inputs.interactivity.interactor.id}}",
+            "manager": "{{steps.0.fields.manager}}",
+            "start_date": "{{steps.0.fields.start_date}}",
+            "end_date": "{{steps.0.fields.end_date}}"
+          }
+        }
+      ]
+    }
+  },
+  "outgoing_domains": []
 }
