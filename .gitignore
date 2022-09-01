@@ -39,4 +39,4 @@ logs/
 .vscode/
 
 # slack
-.slack/
+.slack
