@@ -1,4 +1,3 @@
-from typing import Tuple
 from datetime import datetime
 from logging import Logger
 
@@ -135,9 +134,9 @@ def _get_context_block(mrkdwn: str):
     }
 
 
-def _parse_inputs(inputs: dict) -> Tuple[str, str, str, str]:
+def _parse_inputs(inputs: dict):
     manager = inputs["manager"]
     employee = inputs["employee"]
     start_date = datetime.fromtimestamp(inputs["start_date"]).strftime("%m/%d/%Y %H:%M")
     end_date = datetime.fromtimestamp(inputs["end_date"]).strftime("%m/%d/%Y %H:%M")
-    return tuple(manager, employee, start_date, end_date)
+    return manager, employee, start_date, end_date
