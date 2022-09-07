@@ -1,14 +1,21 @@
+import os
+import logging
+
 from datetime import datetime
-from logging import Logger
 
 from slack_sdk import WebClient
-from slack_bolt import Complete, Ack
+from slack_bolt import App, Complete, Ack
 
-from app.setup import app
+APPROVE_ID = "approve_action_id"
+DENY_ID = "deny_action_id"
 
+# Initialization
+app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
+logging.basicConfig(level=logging.INFO)
 
+# Register & define Listeners
 @app.function("review_approval")
-def request_approval(event, client: WebClient, complete: Complete, logger: Logger):
+def request_approval(event, client: WebClient, complete: Complete, logger: logging.Logger):
     try:
         manager, employee, start_date, end_date = _parse_inputs(event["inputs"])
         client.chat_postMessage(
@@ -46,7 +53,7 @@ def request_approval(event, client: WebClient, complete: Complete, logger: Logge
                                 "type": "plain_text",
                                 "text": "Approve",
                             },
-                            "action_id": "approve_action_id",
+                            "action_id": APPROVE_ID,
                             "style": "primary",
                         },
                         {
@@ -55,7 +62,7 @@ def request_approval(event, client: WebClient, complete: Complete, logger: Logge
                                 "type": "plain_text",
                                 "text": "Deny",
                             },
-                            "action_id": "deny_action_id",
+                            "action_id": DENY_ID,
                             "style": "danger",
                         },
                     ],
@@ -68,67 +75,67 @@ def request_approval(event, client: WebClient, complete: Complete, logger: Logge
         raise e
 
 
-@request_approval.action("approve_action_id")
-def approve_action(ack: Ack, client: WebClient, body, complete: Complete, logger: Logger):
+@request_approval.action(APPROVE_ID)
+def approve_action(
+    ack: Ack, client: WebClient, body: dict, complete: Complete, logger: logging.Logger
+):
     try:
         ack()
         manager, employee, start_date, end_date = _parse_inputs(body["function_data"]["inputs"])
-        mrkdwn = (
+        markdown = (
             f":white_check_mark: Time-off request for _{start_date}_ :arrow_right: "
             f"_{end_date}_ approved by <@{manager}>"
         )
+        context_block = _get_context_block(markdown)
+        client.chat_postMessage(channel=employee, text=markdown, blocks=[context_block])
 
-        _notify_response(client, employee, body, mrkdwn)
-
+        _update_request_message(client, body, context_block, markdown)
         complete()
     except Exception as e:
         logger.error(e)
-        complete("Cannot request approval")
+        complete(error="Cannot approve request")
         raise e
 
 
-@request_approval.action("deny_action_id")
-def deny_action(ack: Ack, client: WebClient, body, complete: Complete, logger: Logger):
+@request_approval.action(DENY_ID)
+def deny_action(ack: Ack, client: WebClient, body, complete: Complete, logger: logging.Logger):
     try:
         ack()
         manager, employee, start_date, end_date = _parse_inputs(body["function_data"]["inputs"])
-        mrkdwn = (
+        markdown = (
             f":no_entry: Time-off request for _{start_date}_ :arrow_right: "
             f"_{end_date}_ denied by <@{manager}>"
         )
+        context_block = _get_context_block(markdown)
+        client.chat_postMessage(channel=employee, text=markdown, blocks=[context_block])
 
-        _notify_response(client, employee, body, mrkdwn)
-
+        _update_request_message(client, body, context_block, markdown)
         complete()
     except Exception as e:
         logger.error(e)
-        complete(error="Cannot request approval")
+        complete(error="Cannot deny request")
         raise e
 
 
-def _notify_response(client: WebClient, employee: str, body: dict, mrkdwn: str):
-    context_block = _get_context_block(mrkdwn)
-
+def _update_request_message(client: WebClient, body: dict, block: dict, text: str):
     updated_blocks = body["message"]["blocks"][:-1]
-    updated_blocks.append(context_block)
-
-    client.chat_postMessage(channel=employee, text=mrkdwn, blocks=[context_block])
+    updated_blocks.append(block)
 
     client.chat_update(
         channel=body["container"]["channel_id"],
         ts=body["container"]["message_ts"],
-        text=mrkdwn,
+        text=text,
         blocks=updated_blocks,
     )
 
 
-def _get_context_block(mrkdwn: str):
+def _get_context_block(markdown: str) -> dict:
     return {
         "type": "context",
         "elements": [
             {
                 "type": "mrkdwn",
-                "text": mrkdwn,
+                "text": markdown,
             },
         ],
     }

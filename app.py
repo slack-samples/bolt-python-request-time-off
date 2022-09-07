@@ -1,7 +1,7 @@
 import os
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-from app import app
+from functions import app
 
 # Start Bolt app
 if __name__ == "__main__":

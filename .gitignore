@@ -37,6 +37,7 @@ logs/
 *.db
 .pytype/
 .vscode/
+scripts
 
 # slack
 .slack
