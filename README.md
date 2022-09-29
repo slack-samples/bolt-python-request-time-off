@@ -24,6 +24,13 @@ slack create my-app -t slack-samples/bolt-python-request-time-off
 # Change into this project directory
 cd my-app
 
+# Setup your python virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install the project dependencies
+pip install -r requirements.txt
+
 # Run app locally
 slack run
 
@@ -31,6 +38,16 @@ slack run
 # Slack currently doesn't support deployment of Bolt apps
 
 ```
+
+#### Linting
+```zsh
+# Run flake8 from root directory for linting
+flake8 *.py && flake8 functions/
+
+# Run black from root directory for code formatting
+black .
+```
+
 #### Running your app locally
 
 While building your app, you can see your changes propagated to your 
@@ -130,4 +147,3 @@ All trigger configuration files live in here - for this example, `link-shortcut.
 ### `slack.json`
 
 `slack.json` is a required file for running Slack CLI apps. This file is a way for the CLI to interact with your project's SDK. It defines script hooks which are *executed by the CLI* and *implemented by the SDK.*
-
