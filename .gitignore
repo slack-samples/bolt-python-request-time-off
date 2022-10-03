@@ -40,4 +40,4 @@ logs/
 scripts
 
 # slack
-.slack
+.slack/apps.dev.json
