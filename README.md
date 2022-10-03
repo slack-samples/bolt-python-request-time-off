@@ -1,92 +1,149 @@
-# Bolt for Python Template App
+# Bolt Python Request Time Off
 
-This is a generic Bolt for Python template app used to build out Slack apps.
+This is a [Slack CLI](https://api.slack.com/future/overview) compatible app that uses Bolt Python to create an interactive time off request flow.
 
-Before getting started, make sure you have a development workspace where you have permissions to install apps. If you don’t have one setup, go ahead and [create one](https://slack.com/create).
+The application can be used to submit time off requests through a workflow, which will then be sent to a specified manager. The manager will be able to approve or deny the request, notifying the submitter.
+
+![take-your-time-demo](https://user-images.githubusercontent.com/12901850/186937812-6d732228-6b14-41d3-83fc-531125e67957.gif)
+
 ## Installation
 
-#### Create a Slack App
-1. Open [https://api.slack.com/apps/new](https://api.slack.com/apps/new) and choose "From an app manifest"
-2. Choose the workspace you want to install the application to
-3. Copy the contents of [manifest.json](./manifest.json) into the text box that says `*Paste your manifest code here*` (within the JSON tab) and click *Next*
-4. Review the configuration and click *Create*
-5. Click *Install to Workspace* and *Allow* on the screen that follows. You'll then be redirected to the App Configuration dashboard.
+#### Prerequisites
+To use this template, you will need to have installed and configured the Slack CLI. 
 
-#### Environment Variables
-Before you can run the app, you'll need to store some environment variables.
+Before you start building with the CLI, an admin or owner on your workspace needs to have accepted the Slack Platform and Beta Service Terms [here](https://slack.com/admin/settings#hermes_permissions).
 
-1. Open your apps configuration page from this list, click **OAuth & Permissions** in the left hand menu, then copy the Bot User OAuth Token. You will store this in your environment as `SLACK_BOT_TOKEN`.
-2. Click ***Basic Information** from the left hand menu and follow the steps in the App-Level Tokens section to create an app-level token with the `connections:write` scope. Copy this token. You will store this in your environment as `SLACK_APP_TOKEN`.
+Once you've accepted the Terms of Service, you can get started with the CLI through our [Quickstart Guide](https://api.slack.com/future/quickstart).
 
-```zsh
-# Replace with your app token and bot token
-export SLACK_BOT_TOKEN=<your-bot-token>
-export SLACK_APP_TOKEN=<your-app-token>
-```
+### Setup Your Project
 
-### Setup Your Local Project
 ```zsh
 # Clone this project onto your machine
-git clone https://github.com/slackapi/bolt-python-template.git
+slack create my-app -t slack-samples/bolt-python-request-time-off
 
 # Change into this project directory
-cd bolt-python-starter-template
+cd my-app
 
 # Setup your python virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Install the dependencies
+# Install the project dependencies
 pip install -r requirements.txt
 
-# Start your local server
-python3 app.py
+# Run app locally
+slack run
+
+# Deployment 
+# Slack currently doesn't support deployment of Bolt apps
+
 ```
 
 #### Linting
 ```zsh
 # Run flake8 from root directory for linting
-flake8 *.py && flake8 listeners/
+flake8 *.py && flake8 functions/
 
 # Run black from root directory for code formatting
 black .
 ```
 
+#### Running your app locally
+
+While building your app, you can see your changes propagated to your 
+workspace in real-time with `slack run`.
+
+Executing `slack run` starts a local development server, syncing changes to 
+your workspace's development version of your app. (You'll know it's the 
+development version because the name has the string `(dev)` appended).
+
+Your local development server is ready to go when you see the following:
+
+```zsh
+⚡️ Bolt app is running! ⚡️
+```
+
+When you want to turn off the local development server, use `Ctrl+c` in the command prompt.
+
+#### Deploying your app
+We'll be adding documentation for Bolt app deployments - check back soon!
+
+### Initialize your Workflow Trigger
+To allow for a workflow to be executed in a workspace, you'll need to create a [trigger](https://api.slack.com/future/triggers). Slack supports many different kinds of triggers, and for this application, we will use a [link trigger](https://api.slack.com/future/triggers#link). The definition for this link trigger is a JSON config file which can be found in `manifest/triggers/time_off_request.json`.
+
+The contents of the file looks something like this:
+
+```json
+{
+    "type": "shortcut",
+    "name": "Request Time Off",
+    "description": "Submit a request to take time off",
+    "workflow": "#/workflows/time_off_request",
+    "shortcut": {},
+    "inputs": {
+        "interactivity": {
+            "value": "{{data.interactivity}}"
+        }
+    }
+}
+```
+
+This file acts as a config for your trigger that specifies which workflow is executed when the trigger is invoked (in this case, it maps the workflow to the `time_off_request` callback ID from the Time Off Request Workflow initialized in `manifest/manifest.json`).
+
+This file will also define how the trigger shows up in your application - for example, the `name` field will be the name of the trigger when it is surfaced as a link trigger in your workspace.
+
+To create a trigger for your workflow, run the following command:
+```zsh
+slack triggers create --trigger-def "manifest/triggers/time_off_request.json"
+```
+
+This trigger will produce an output that looks like this:
+```zsh
+⚡ Trigger created
+     Trigger ID:   [ID for trigger]
+     Trigger Type: [type of trigger]
+     Trigger Name: [name of trigger]
+     URL:  [some URL]
+```
+To make the trigger accessible, you can paste the link trigger URL in a channel or conversation. We recommend saving the trigger as a channel bookmark for easy access.
+
+#### Adding new triggers
+
+To add new triggers to your app, you’ll need to do the following:
+
+1. Update the `manifest.json` with the desired workflow and/or functionality you’d like your trigger to execute.
+2. Run `slack run` so that any new additions to the `manifest.json` file will be detected within the `slack trigger` command.
+3. Create a JSON file in the `./manifest/triggers` directory to [generate your trigger](https://api.slack.com/future/triggers).
+4. Run `slack triggers create --trigger-def "manifest/triggers/[json-name].json"`.
+
 ## Project Structure
-
-### `manifest.json`
-
-`manifest.json` is a configuration for Slack apps. With a manifest, you can create an app with a pre-defined configuration, or adjust the configuration of an existing app.
 
 ### `app.py`
 
-`app.py` is the entry point for the application and is the file you'll run to start the server. This project aims to keep this file as thin as possible, primarily using it as a way to route inbound requests.
+`app.py` is the entry point for the application. This project aims to keep this file as thin as possible, primarily using it as a way to route inbound requests.
 
-### `/listeners`
+### `/functions`
+This directory holds function listeners and invocations. `__init__.py` registers the function listener for the app, while `request-approval.py` configures the appropriate function handler that will be called when that function's event is detected. Additional handlers for the function event, such as action handlers, are configured in this file as well.
 
-Every incoming request is routed to a "listener". Inside this directory, we group each listener based on the Slack Platform feature used, so `/listeners/shortcuts` handles incoming [Shortcuts](https://api.slack.com/interactivity/shortcuts) requests, `/listeners/views` handles [View submissions](https://api.slack.com/reference/interaction-payloads/views#view_submission) and so on.
+### `/functions/actions`
+This directory holds related actions that are triggered as additional interactivity event handlers when a function is called.
 
+### `/functions/request-approval.py`
 
-## App Distribution / OAuth
+This file contains the configuration for notifying a manager once an approval request has been submitted, which then triggers a function. This file sets up a listener to listen for the function being called and then executes a particular response that sends a message to the approver to then approve or deny the request.
 
-Only implement OAuth if you plan to distribute your application across multiple workspaces. A separate `app-oauth.py` file can be found with relevant OAuth settings.
+### `/manifest`
 
-When using OAuth, Slack requires a public URL where it can send requests. In this template app, we've used [`ngrok`](https://ngrok.com/download). Checkout [this guide](https://ngrok.com/docs#getting-started-expose) for setting it up.
+This directory contains all related initialization of the app as well as any workflow or function definitions used in the project.
 
-Start `ngrok` to access the app on an external network and create a redirect URL for OAuth. 
+### `/manifest/manifest.json`
 
-```
-ngrok http 3000
-```
+`manifest.json` is a configuration for Slack CLI apps in JSON. This file will establish all basic configurations for your application, including app name and description. 
 
-This output should include a forwarding address for `http` and `https` (we'll use `https`). It should look something like the following:
+### `/manifest/triggers`
 
-```
-Forwarding   https://3cb89939.ngrok.io -> http://localhost:3000
-```
+All trigger configuration files live in here - for this example, `link-shortcut.json` is the trigger config for a trigger that starts the workflow initialized in `/manifest/manifest.json`.
 
-Navigate to **OAuth & Permissions** in your app configuration and click **Add a Redirect URL**. The redirect URL should be set to your `ngrok` forwarding address with the `slack/oauth_redirect` path appended. For example:
+### `slack.json`
 
-```
-https://3cb89939.ngrok.io/slack/oauth_redirect
-```
+`slack.json` is a required file for running Slack CLI apps. This file is a way for the CLI to interact with your project's SDK. It defines script hooks which are *executed by the CLI* and *implemented by the SDK.*

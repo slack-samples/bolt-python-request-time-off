@@ -1,0 +1,12 @@
+{
+    "type": "shortcut",
+    "name": "Request Time Off",
+    "description": "Submit a request to take time off",
+    "workflow": "#/workflows/time_off_request",
+    "shortcut": {},
+    "inputs": {
+        "interactivity": {
+            "value": "{{data.interactivity}}"
+        }
+    }
+}
