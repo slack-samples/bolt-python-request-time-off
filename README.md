@@ -1,7 +1,7 @@
 # Bolt Python Request Time Off
 
 This app contains a sample Python project for use on Slack's
-[next-generation hosted platform](https://api.slack.com/future). The project
+[next-generation platform](https://api.slack.com/future). The project
 models a time off request workflow. This request will get routed to their
 manager, who receives a direct message from this application with the request
 details along with two buttons they can interact with to approve or deny the
