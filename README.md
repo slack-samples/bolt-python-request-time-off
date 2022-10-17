@@ -7,8 +7,7 @@ manager, who receives a direct message from this application with the request
 details along with two buttons they can interact with to approve or deny the
 request.
 
-<img src="https://user-images.githubusercontent.com/12901850/
-186937812-6d732228-6b14-41d3-83fc-531125e67957.gif" width="60%"/>
+<img src="https://user-images.githubusercontent.com/12901850/186937812-6d732228-6b14-41d3-83fc-531125e67957.gif" width="60%"/>
 
 **Guide Outline**:
 
