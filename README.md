@@ -1,45 +1,73 @@
 # Bolt Python Request Time Off
 
-This is a [Slack CLI](https://api.slack.com/future/overview) compatible app that uses Bolt Python to create an interactive time off request flow.
+This app contains a sample Python project for use on Slack's
+[next-generation platform](https://api.slack.com/future). The project
+models a time off request workflow. This request will get routed to their
+manager, who receives a direct message from this application with the request
+details along with two buttons they can interact with to approve or deny the
+request.
 
-The application can be used to submit time off requests through a workflow, which will then be sent to a specified manager. The manager will be able to approve or deny the request, notifying the submitter.
+<img src="https://user-images.githubusercontent.com/12901850/186937812-6d732228-6b14-41d3-83fc-531125e67957.gif" width="60%"/>
 
-![take-your-time-demo](https://user-images.githubusercontent.com/12901850/186937812-6d732228-6b14-41d3-83fc-531125e67957.gif)
+**Guide Outline**:
 
-## Installation
+- [Bolt Python Request Time Off](#bolt-python-request-time-off)
+  - [Supported Workflows](#supported-workflows)
+  - [Setup](#setup)
+    - [Install the Slack CLI](#install-the-slack-cli)
+    - [Clone the Sample App](#clone-the-sample-app)
+      - [Linting](#linting)
+  - [Create a Link Trigger](#create-a-link-trigger)
+  - [Running Your Project Locally](#running-your-project-locally)
+  - [Project Structure](#project-structure)
+    - [`/manifest`](#manifest)
+    - [`/manifest/manifest.json`](#manifestmanifestjson)
+    - [`/manifest/triggers`](#manifesttriggers)
+    - [`slack.json`](#slackjson)
+    - [`/functions`](#functions)
+  - [Resources](#resources)
 
-#### Prerequisites
-To use this template, you will need to have installed and configured the Slack CLI. 
+---
 
-Before you start building with the CLI, an admin or owner on your workspace needs to have accepted the Slack Platform and Beta Service Terms [here](https://slack.com/admin/settings#hermes_permissions).
+## Supported Workflows
 
-Once you've accepted the Terms of Service, you can get started with the CLI through our [Quickstart Guide](https://api.slack.com/future/quickstart).
+- **Request time off**: Enter details for a time off request and route it to a
+  manager for approval.
 
-### Setup Your Project
+## Setup
+
+Before getting started, make sure you have a development workspace where you
+have permissions to install apps. If you don’t have one set up, go ahead and
+[create one](https://slack.com/create). Also, please note that the workspace
+requires any of [the Slack paid plans](https://slack.com/pricing).
+
+### Install the Slack CLI
+
+To use this sample, you first need to install and configure the Slack CLI.
+Step-by-step instructions can be found in our
+[Quickstart Guide](https://api.slack.com/future/quickstart).
+
+### Clone the Sample App
+
+Start by cloning this repository:
 
 ```zsh
 # Clone this project onto your machine
-slack create my-app -t slack-samples/bolt-python-request-time-off
+$ slack create my-time-off-app -t slack-samples/bolt-python-request-time-off
 
 # Change into this project directory
-cd my-app
+$ cd my-time-off-app
 
 # Setup your python virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
+$ python3 -m venv .venv
+$ source .venv/bin/activate
 
 # Install the project dependencies
-pip install -r requirements.txt
-
-# Run app locally
-slack run
-
-# Deployment 
-# Slack currently doesn't support deployment of Bolt apps
-
+$ pip install -r requirements.txt
 ```
 
 #### Linting
+
 ```zsh
 # Run flake8 from root directory for linting
 flake8 *.py && flake8 functions/
@@ -48,102 +76,95 @@ flake8 *.py && flake8 functions/
 black .
 ```
 
-#### Running your app locally
+## Create a Link Trigger
 
-While building your app, you can see your changes propagated to your 
-workspace in real-time with `slack run`.
+[Triggers](https://api.slack.com/future/triggers) are what cause Workflows to
+run. These Triggers can be invoked by a user, or automatically as a response to
+an event within Slack.
 
-Executing `slack run` starts a local development server, syncing changes to 
-your workspace's development version of your app. (You'll know it's the 
-development version because the name has the string `(dev)` appended).
+A [Link Trigger](https://api.slack.com/future/triggers/link) is a type of
+Trigger that generates a **Shortcut URL** which, when posted in a channel or
+added as a bookmark, becomes a link. When clicked, the Link Trigger will run the
+associated Workflow.
 
-Your local development server is ready to go when you see the following:
+Link Triggers are _unique to each installed version of your app_. This means
+that Shortcut URLs will be different across each workspace, as well as between
+[locally run](#running-your-project-locally). When creating a Trigger, you must select
+the Workspace that you'd like to create the Trigger in. Each Workspace has a
+development version (denoted by `(dev)`), as well as a deployed version.
+
+To create a Link Trigger for the "Request Time Off" Workflow, run the following
+command:
 
 ```zsh
+slack trigger create --trigger-def triggers/trigger.ts
+```
+
+After selecting a Workspace, the output provided will include the Link Trigger
+Shortcut URL. Copy and paste this URL into a channel as a message, or add it as
+a bookmark in a channel of the Workspace you selected.
+
+**Note: this link won't run the Workflow until the app is either running locally
+or deployed!** Read on to learn how to run your app locally and eventually
+deploy it to Slack hosting.
+
+## Running Your Project Locally
+
+While building your app, you can see your changes propagated to your workspace
+in real-time with `slack run`. In both the CLI and in Slack, you'll know an app
+is the development version if the name has the string `(dev)` appended.
+
+```zsh
+# Run app locally
+$ slack run
+
 ⚡️ Bolt app is running! ⚡️
 ```
 
-When you want to turn off the local development server, use `Ctrl+c` in the command prompt.
+Once running, click the
+[previously created Shortcut URL](#create-a-link-trigger) associated with the
+`(dev)` version of your app. This should start a Workflow that opens a form used
+to collect data around your time off request!
 
-#### Deploying your app
-We'll be adding documentation for Bolt app deployments - check back soon!
-
-### Initialize your Workflow Trigger
-To allow for a workflow to be executed in a workspace, you'll need to create a [trigger](https://api.slack.com/future/triggers). Slack supports many different kinds of triggers, and for this application, we will use a [link trigger](https://api.slack.com/future/triggers#link). The definition for this link trigger is a JSON config file which can be found in `manifest/triggers/time_off_request.json`.
-
-The contents of the file looks something like this:
-
-```json
-{
-    "type": "shortcut",
-    "name": "Request Time Off",
-    "description": "Submit a request to take time off",
-    "workflow": "#/workflows/time_off_request",
-    "shortcut": {},
-    "inputs": {
-        "interactivity": {
-            "value": "{{data.interactivity}}"
-        }
-    }
-}
-```
-
-This file acts as a config for your trigger that specifies which workflow is executed when the trigger is invoked (in this case, it maps the workflow to the `time_off_request` callback ID from the Time Off Request Workflow initialized in `manifest/manifest.json`).
-
-This file will also define how the trigger shows up in your application - for example, the `name` field will be the name of the trigger when it is surfaced as a link trigger in your workspace.
-
-To create a trigger for your workflow, run the following command:
-```zsh
-slack triggers create --trigger-def "manifest/triggers/time_off_request.json"
-```
-
-This trigger will produce an output that looks like this:
-```zsh
-⚡ Trigger created
-     Trigger ID:   [ID for trigger]
-     Trigger Type: [type of trigger]
-     Trigger Name: [name of trigger]
-     URL:  [some URL]
-```
-To make the trigger accessible, you can paste the link trigger URL in a channel or conversation. We recommend saving the trigger as a channel bookmark for easy access.
-
-#### Adding new triggers
-
-To add new triggers to your app, you’ll need to do the following:
-
-1. Update the `manifest.json` with the desired workflow and/or functionality you’d like your trigger to execute.
-2. Run `slack run` so that any new additions to the `manifest.json` file will be detected within the `slack trigger` command.
-3. Create a JSON file in the `./manifest/triggers` directory to [generate your trigger](https://api.slack.com/future/triggers).
-4. Run `slack triggers create --trigger-def "manifest/triggers/[json-name].json"`.
+To stop running locally, press `<CTRL> + C` to end the process.
 
 ## Project Structure
 
-### `app.py`
-
-`app.py` is the entry point for the application. This project aims to keep this file as thin as possible, primarily using it as a way to route inbound requests.
-
-### `/functions`
-This directory holds function listeners and invocations. `__init__.py` registers the function listener for the app, while `request-approval.py` configures the appropriate function handler that will be called when that function's event is detected. Additional handlers for the function event, such as action handlers, are configured in this file as well.
-
-### `/functions/actions`
-This directory holds related actions that are triggered as additional interactivity event handlers when a function is called.
-
-### `/functions/request-approval.py`
-
-This file contains the configuration for notifying a manager once an approval request has been submitted, which then triggers a function. This file sets up a listener to listen for the function being called and then executes a particular response that sends a message to the approver to then approve or deny the request.
-
 ### `/manifest`
 
-This directory contains all related initialization of the app as well as any workflow or function definitions used in the project.
+This directory contains all related initialization of the app as well as any
+workflow or function definitions used in the project.
 
 ### `/manifest/manifest.json`
 
-`manifest.json` is a configuration for Slack CLI apps in JSON. This file will establish all basic configurations for your application, including app name and description. 
+`manifest.json` is a configuration for Slack CLI apps in JSON. This file will
+establish all basic configurations for your application, including app name
+and description.
 
 ### `/manifest/triggers`
 
-All trigger configuration files live in here - for this example, `link-shortcut.json` is the trigger config for a trigger that starts the workflow initialized in `/manifest/manifest.json`.
+All trigger configuration files live in here - for this example,
+`link-shortcut.json` is the trigger config for a trigger that starts the workflow
+ initialized in `/manifest/manifest.json`.
 
 ### `slack.json`
 
-`slack.json` is a required file for running Slack CLI apps. This file is a way for the CLI to interact with your project's SDK. It defines script hooks which are *executed by the CLI* and *implemented by the SDK.*
+Used by the CLI to interact with the project's SDK dependencies. It contains
+script hooks that are executed by the CLI and implemented by the SDK.
+
+### `/functions`
+
+[Functions](https://api.slack.com/future/functions) are reusable building blocks
+of automation that accept inputs, perform calculations, and provide outputs.
+Functions can be used independently or as steps in Workflows.
+
+## Resources
+
+To learn more about developing with the CLI, you can visit the following guides:
+
+- [Creating a new app with the CLI](https://api.slack.com/future/create)
+- [Configuring your app](https://api.slack.com/future/manifest)
+- [Developing locally](https://api.slack.com/future/run)
+
+To view all documentation and guides available, visit the
+[Overview page](https://api.slack.com/future/overview).
